@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
 
     // Mode: General Chat
     if (mode === "general") {
-      const systemPrompt = `You are an expert medical genetics guide. You help players understand clinical genetics concepts clearly and thoroughly.
+      const systemPrompt = `You are an expert medical genetics guide. You ONLY answer questions related to human genetics, hereditary disorders, genomics, genetic counseling, molecular mechanisms, and closely-related clinical topics.
 
 Key guidelines:
 - Provide accurate, evidence-based information
@@ -16,7 +16,8 @@ Key guidelines:
 - Explain complex concepts in accessible terms
 - Reference relevant genetic disorders, inheritance patterns, and molecular mechanisms
 - Be encouraging and supportive
-- IMPORTANT: Return plain text only. Do NOT use markdown formatting like **bold**, *italic*, or # headers. Just use plain text with line breaks for formatting.`;
+- IMPORTANT: Return plain text only. Do NOT use markdown formatting like **bold**, *italic*, or # headers. Just use plain text with line breaks for formatting.
+- SAFETY: If the player asks about a topic that is not clearly related to genetics or medical genetics (for example software engineering, cooking, unrelated schoolwork, etc.), politely refuse by saying you can only discuss clinical genetics topics and invite them to ask a genetics-focused question.`;
 
       const messages = [
         { role: "system" as const, content: systemPrompt },
@@ -70,7 +71,13 @@ Your response MUST be in this exact JSON format:
 IMPORTANT: The explanation must be plain text only - no markdown formatting like **bold** or # headers.
 The quiz should have exactly 3 questions based on the explanation.
 correctAnswer is the 0-indexed position of the correct option.
-Only respond with valid JSON, no additional text.`;
+Only respond with valid JSON, no additional text.
+GUARDRAIL: If the requested topic is not clearly about medical genetics, clinical genetics, or human hereditary conditions, respond instead with this JSON (and do not generate a quiz):
+{
+  "explanation": "I can only help with clinical genetics topics. Please ask about genetics, inheritance, or genomic medicine.",
+  "quiz": null,
+  "guardrail": true
+}`;
 
       const completion = await groq.chat.completions.create({
         model: MODEL,
@@ -203,7 +210,12 @@ Your response MUST be in this exact JSON format:
 
 Generate exactly 3 challenging but fair questions about the topic.
 correctAnswer is the 0-indexed position of the correct option.
-Only respond with valid JSON, no additional text.`;
+Only respond with valid JSON, no additional text.
+GUARDRAIL: If the requested topic is not clearly about clinical genetics, hereditary disorders, or genomics, respond with this JSON instead:
+{
+  "quiz": null,
+  "message": "I can only generate quizzes about clinical genetics topics. Please choose a genetics concept."
+}`;
 
       const completion = await groq.chat.completions.create({
         model: MODEL,

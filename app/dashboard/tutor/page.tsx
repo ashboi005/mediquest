@@ -131,7 +131,15 @@ export default function TutorPage() {
         ]));
       } else {
         // For learn_quiz mode, show explanation and then quiz
-        if (mode === "learn_quiz" && data.explanation && data.quiz) {
+        if (mode === "learn_quiz" && data.guardrail) {
+          setMessages((prev) => trimMessages([
+            ...prev,
+            { role: "assistant", content: data.explanation || "I can only help with clinical genetics topics." },
+          ]));
+          setCurrentQuiz(null);
+          setQuizState({ answers: [], submitted: false });
+          setPostQuizExplanation(null);
+        } else if (mode === "learn_quiz" && data.explanation && data.quiz) {
           setMessages((prev) => trimMessages([
             ...prev,
             { role: "assistant", content: data.explanation },
@@ -140,7 +148,15 @@ export default function TutorPage() {
           setQuizState({ answers: new Array(data.quiz.questions.length).fill(-1), submitted: false });
           setPostQuizExplanation(null);
         } else {
-          if (mode === "quiz_learn" && data.quiz) {
+          if (mode === "quiz_learn" && data.message && !data.quiz) {
+            setMessages((prev) => trimMessages([
+              ...prev,
+              { role: "assistant", content: data.message },
+            ]));
+            setCurrentQuiz(null);
+            setQuizState({ answers: [], submitted: false });
+            setPostQuizExplanation(null);
+          } else if (mode === "quiz_learn" && data.quiz) {
             setMessages((prev) => trimMessages([
               ...prev,
               { role: "assistant", content: "Quiz generated! Answer the questions below.", quiz: data.quiz },

@@ -22,8 +22,10 @@ export default async function LeaderboardPage() {
   ]);
 
   const currentUserId = session.user.id;
+  const resolvedRank = userRank && userRank > 0 ? userRank : 1;
+
   const currentUser = {
-    rank: userRank || 0,
+    rank: resolvedRank,
     name: session.user.name || "You",
     xp: userStats?.xp || 0,
     level: userStats?.level || 1,
