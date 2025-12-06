@@ -1,36 +1,116 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MediQuest
+
+A gamified educational platform where you roleplay through genetics scenarios using AI simulation, adaptive learning, and competitive challenges.
+
+## Features
+
+### The Clinic
+- **Infinite Patient Scenarios**: AI-generated patient cases with realistic presentations
+- **Investigation System**: Order blood work, karyotype analysis, and physical examinations
+- **Instant Feedback**: Get detailed debriefs explaining the correct diagnosis
+- **XP Rewards**: Earn more XP for diagnosing with fewer investigations
+
+### The Tutor Lab
+Three learning modes powered by AI:
+1. **General Chat**: Have conversations about any genetics topic
+2. **Learn → Quiz**: Get an explanation first, then test your knowledge
+3. **Quiz → Learn**: Test yourself first, then learn from your mistakes
+
+### The Leaderboard
+- Compete with peers for top rankings
+- Track your progress with XP and levels
+- Earn achievements and badges
+
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router, Server Actions, TypeScript)
+- **Styling**: Tailwind CSS + Custom UI Components
+- **Icons**: Lucide React
+- **Database**: PostgreSQL with Drizzle ORM
+- **Authentication**: Better Auth (Email/Password)
+- **AI**: Groq SDK (llama-3.1-70b-versatile)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+ or Bun
+- PostgreSQL database
+- Groq API key
 
+### Installation
+
+1. Clone the repository and install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Set up environment variables in `.env`:
+```env
+# Database
+DATABASE_URL="postgresql://user:password@localhost:5432/mediquest"
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# Better Auth
+BETTER_AUTH_SECRET="your-secret-key-here"
+BETTER_AUTH_URL="http://localhost:3000"
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Groq AI
+GROQ_API_KEY="your-groq-api-key"
 
-## Learn More
+# App URL
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
 
-To learn more about Next.js, take a look at the following resources:
+3. Push the database schema:
+```bash
+bun run db:push
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. Start the development server:
+```bash
+bun run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+5. Open [http://localhost:3000](http://localhost:3000)
 
-## Deploy on Vercel
+## Database Commands
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+bun run db:generate  # Generate migrations
+bun run db:migrate   # Run migrations
+bun run db:push      # Push schema to database
+bun run db:studio    # Open Drizzle Studio
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project Structure
+
+```
+mediquest/
+├── app/
+│   ├── api/
+│   │   ├── auth/[...all]/    # Better Auth API routes
+│   │   ├── clinic/           # Clinic case generation API
+│   │   └── tutor/            # Tutor AI API
+│   ├── auth/
+│   │   ├── login/            # Login page
+│   │   └── register/         # Registration page
+│   ├── dashboard/
+│   │   ├── clinic/           # The Clinic feature
+│   │   ├── tutor/            # The Tutor Lab feature
+│   │   ├── leaderboard/      # Leaderboard page
+│   │   └── profile/          # User profile page
+│   └── page.tsx              # Landing page
+├── components/
+│   ├── dashboard/            # Dashboard components
+│   └── ui/                   # UI components
+├── lib/
+│   ├── db/                   # Database schema and connection
+│   ├── auth.ts               # Better Auth configuration
+│   ├── auth-client.ts        # Auth client for React
+│   ├── groq.ts               # Groq SDK configuration
+│   └── utils.ts              # Utility functions
+└── drizzle.config.ts         # Drizzle configuration
+```
+
+## License
+
+MIT
