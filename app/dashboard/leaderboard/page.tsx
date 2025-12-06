@@ -29,8 +29,12 @@ export default async function LeaderboardPage() {
     level: userStats?.level || 1,
   };
 
-  // Filter out current user from leaderboard to avoid duplicate display
-  const otherUsers = leaderboardData.filter(u => u.id !== currentUserId);
+  const leaderboardList = leaderboardData.map((entry) => ({
+    ...entry,
+    isCurrent: entry.id === currentUserId,
+  }));
+
+  const otherUsers = leaderboardList.filter((entry) => !entry.isCurrent);
   
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -121,8 +125,8 @@ export default async function LeaderboardPage() {
         </Card>
       </div>
 
-      {/* Top 3 Podium - only show if we have at least 3 other users */}
-      {otherUsers.length >= 3 && (
+      {/* Top 3 Podium - only show if we have at least 3 players */}
+      {leaderboardData.length >= 3 && (
         <div className="grid md:grid-cols-3 gap-4">
           {/* 2nd Place */}
           <Card className="md:mt-8 border-slate-600">
@@ -197,42 +201,58 @@ export default async function LeaderboardPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {otherUsers.map((user, index) => (
+            {leaderboardList.map((user, index) => (
               <div
-                key={index}
+                key={user.id ?? index}
                 className={cn(
                   "flex items-center justify-between p-4 rounded-xl transition-all",
-                  index < 3
-                    ? "bg-gradient-to-r from-slate-800/80 to-slate-800/40"
-                    : "bg-slate-800/30 hover:bg-slate-800/50"
+                  user.isCurrent
+                    ? "bg-emerald-500/10 border border-emerald-500/30"
+                    : user.rank <= 3
+                      ? "bg-gradient-to-r from-slate-800/80 to-slate-800/40"
+                      : "bg-slate-800/30 hover:bg-slate-800/50"
                 )}
               >
                 <div className="flex items-center gap-4">
                   <div className="w-8 text-center">
                     {getRankIcon(user.rank) || (
-                      <span className="text-slate-400 font-medium">#{user.rank}</span>
+                      <span className={cn(
+                        "font-medium",
+                        user.isCurrent ? "text-emerald-400" : "text-slate-400"
+                      )}>
+                        #{user.rank}
+                      </span>
                     )}
                   </div>
                   <Avatar>
                     <AvatarFallback
                       className={cn(
-                        index === 0 && "bg-gradient-to-br from-amber-400 to-amber-600",
-                        index === 1 && "bg-gradient-to-br from-slate-400 to-slate-500",
-                        index === 2 && "bg-gradient-to-br from-amber-600 to-amber-700",
-                        index > 2 && "bg-gradient-to-br from-emerald-500 to-teal-600"
+                        user.rank === 1 && "bg-gradient-to-br from-amber-400 to-amber-600",
+                        user.rank === 2 && "bg-gradient-to-br from-slate-400 to-slate-500",
+                        user.rank === 3 && "bg-gradient-to-br from-amber-600 to-amber-700",
+                        user.rank > 3 && "bg-gradient-to-br from-emerald-500 to-teal-600"
                       )}
                     >
                       {getInitials(user.name)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium text-white">{user.name}</p>
+                    <p className="font-medium text-white">
+                      {user.name} {user.isCurrent && <span className="text-emerald-400">(You)</span>}
+                    </p>
                     <p className="text-sm text-slate-400">Level {user.level}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-6">
                   <div className="text-right">
-                    <p className="font-semibold text-white">{user.xp.toLocaleString()}</p>
+                    <p
+                      className={cn(
+                        "font-semibold",
+                        user.isCurrent ? "text-emerald-400" : "text-white"
+                      )}
+                    >
+                      {user.xp.toLocaleString()}
+                    </p>
                     <p className="text-xs text-slate-400">XP</p>
                   </div>
                   <Badge variant={getRankBadge(user.level).variant}>
@@ -241,43 +261,6 @@ export default async function LeaderboardPage() {
                 </div>
               </div>
             ))}
-
-            {/* Current User - You */}
-            <div className="border-t border-slate-700 pt-4 mt-4">
-              <div className="flex items-center justify-between p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
-                <div className="flex items-center gap-4">
-                  <div className="w-8 text-center">
-                    {currentUser.rank === 1 ? (
-                      <Crown className="w-6 h-6 text-amber-400" />
-                    ) : currentUser.rank === 2 ? (
-                      <Medal className="w-6 h-6 text-slate-300" />
-                    ) : currentUser.rank === 3 ? (
-                      <Medal className="w-6 h-6 text-amber-600" />
-                    ) : (
-                      <span className="text-emerald-400 font-medium">#{currentUser.rank}</span>
-                    )}
-                  </div>
-                  <Avatar>
-                    <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600">
-                      {currentUser.name ? getInitials(currentUser.name) : "YOU"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium text-white">{currentUser.name} <span className="text-emerald-400">(You)</span></p>
-                    <p className="text-sm text-slate-400">Level {currentUser.level}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="text-right">
-                    <p className="font-semibold text-emerald-400">{currentUser.xp.toLocaleString()}</p>
-                    <p className="text-xs text-slate-400">XP</p>
-                  </div>
-                  <Badge variant={getRankBadge(currentUser.level).variant}>
-                    {getRankBadge(currentUser.level).label}
-                  </Badge>
-                </div>
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>

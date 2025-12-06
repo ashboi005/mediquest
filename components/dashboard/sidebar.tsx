@@ -36,11 +36,6 @@ const navItems = [
     href: "/dashboard/leaderboard",
     icon: Trophy,
   },
-  {
-    name: "Profile",
-    href: "/dashboard/profile",
-    icon: User,
-  },
 ];
 
 export function Sidebar() {
