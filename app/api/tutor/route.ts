@@ -82,28 +82,94 @@ Only respond with valid JSON, no additional text.`;
         max_tokens: 2000,
       });
 
-      const responseText = completion.choices[0]?.message?.content || "";
-      
-      try {
-        // Try to parse the JSON response
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          return NextResponse.json({
-            explanation: parsed.explanation,
-            quiz: parsed.quiz,
-          });
+      const rawText = completion.choices[0]?.message?.content || "";
+
+      const sanitizeJsonString = (input: string) => {
+        let cleaned = input.trim();
+        if (cleaned.startsWith("```")) {
+          cleaned = cleaned
+            .replace(/^```json\s*/i, "")
+            .replace(/^```\s*/i, "")
+            .replace(/```$/, "")
+            .trim();
         }
-      } catch (parseError) {
-        // If JSON parsing fails, return just the text as explanation
+        return cleaned;
+      };
+
+      const escapeUnescapedNewlines = (input: string) => {
+        let result = "";
+        let inString = false;
+        let prevChar = "";
+
+        for (let i = 0; i < input.length; i++) {
+          const char = input[i];
+
+          if (char === "\"" && prevChar !== "\\") {
+            inString = !inString;
+          }
+
+          if (inString && char === "\n") {
+            result += "\\n";
+          } else if (inString && char === "\r") {
+            const nextChar = input[i + 1];
+            if (nextChar === "\n") {
+              i += 1;
+            }
+            result += "\\n";
+          } else {
+            result += char;
+          }
+
+          prevChar = char;
+        }
+
+        return result;
+      };
+
+      const parseQuizPayload = (input: string) => {
+        const cleaned = sanitizeJsonString(input);
+        const escaped = escapeUnescapedNewlines(cleaned);
+
+        const attemptParse = (payload: string) => {
+          try {
+            return JSON.parse(payload);
+          } catch {
+            return null;
+          }
+        };
+
+        let parsed = attemptParse(escaped);
+
+        if (!parsed) {
+          const jsonMatch = escaped.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            parsed = attemptParse(jsonMatch[0]);
+          }
+        }
+
+        return parsed;
+      };
+
+      const parsed = parseQuizPayload(rawText);
+
+      if (parsed?.quiz?.questions && Array.isArray(parsed.quiz.questions)) {
+        const normalisedQuiz = {
+          ...parsed.quiz,
+          questions: parsed.quiz.questions.map((q: any) => ({
+            question: q.question,
+            options: q.options,
+            correctAnswer: typeof q.correctAnswer === "number" ? q.correctAnswer : Number(q.correctAnswer) || 0,
+          })),
+        };
+
         return NextResponse.json({
-          explanation: responseText,
-          quiz: null,
+          explanation: parsed.explanation,
+          quiz: normalisedQuiz,
         });
       }
 
       return NextResponse.json({
-        explanation: responseText,
+        explanation: sanitizeJsonString(rawText),
         quiz: null,
       });
     }
